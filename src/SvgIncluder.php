@@ -15,7 +15,10 @@ class SvgIncluder{
   /**
    * Public Methods
    */
-  public function __construct($userSvgFolder = 'svgs', $userSvgFileExt = '.svginline')
+  public function __construct(
+    $userSvgFolder = 'svgs',
+    $userSvgFileExt = '.svginline'
+    )
   {
     $this->svgFolder = $userSvgFolder;
     $this->svgFileExt = $userSvgFileExt;
@@ -23,14 +26,9 @@ class SvgIncluder{
 
   public function loadSvgs($filterArray = array())
   {
+    $filterArray = $this->convertFilterStringToArray($filterArray);
+
     $svgFiles = array();
-
-    // is we have a string instead of array, we convert it to a single element array
-    if (!is_array($filterArray) && !empty($filterArray) && is_string($filterArray))
-    {
-      $filterArray = array(0 => $filterArray);
-    }
-
     // if we don't have filter array, load all files
     if (!empty($filterArray))
     {
@@ -41,7 +39,22 @@ class SvgIncluder{
     } else {
       $svgFiles = $this->getAllSvgs();
     }
+    $svgFiles = array_unique($svgFiles);
     $this->printSvgBlock($svgFiles);
+  }
+
+  public function getInlineSvg($svgId, $optionalClasses = '')
+  {
+    $tag = '';
+    $tag .= '<svg';
+    $tag .= (!empty($optionalClasses)) ? ' class="' . $optionalClasses . '"' : '';
+    $tag .= '><use xlink:href="#' . $svgId . '"></use></svg>';
+    return $tag;
+  }
+
+  public function insertInlineSvg($svgId, $optionalClasses = '')
+  {
+    echo $this->getInlineSvg($svgId, $optionalClasses);
   }
 
   /**
@@ -51,6 +64,8 @@ class SvgIncluder{
   {
     $searchDir = $this->svgFolder . DIRECTORY_SEPARATOR;
     $filter = trim($filter, '*');
+    $filter = trim($filter, '/');
+    $filter = trim($filter, '\\');
     if (!empty($filter))
     {
       $searchDir .= $filter;
@@ -96,6 +111,21 @@ class SvgIncluder{
     $svgSymbol = trim($svgFileContent);
     $svgSymbol .= "\n";
     return $svgSymbol;
+  }
+
+  private function convertFilterStringToArray($filterStatement)
+  {
+    // if we have a string instead of an array, convert it to a single element array
+    if (
+      !is_array($filterStatement) &&
+      !empty($filterStatement) &&
+      is_string($filterStatement)
+      )
+    {
+      $filterArray = array(0 => $filterStatement);
+      return $filterArray;
+    }
+    return $filterStatement;
   }
 
   private function printInlineSvgStartTag()
