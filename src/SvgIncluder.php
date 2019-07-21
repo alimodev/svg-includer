@@ -23,19 +23,41 @@ class SvgIncluder{
 
   public function loadSvgs($filterArray = array())
   {
-    $svgFiles = $this->getAllSvgs();
+    $svgFiles = array();
+
+    // is we have a string instead of array, we convert it to a single element array
+    if (!is_array($filterArray) && !empty($filterArray) && is_string($filterArray))
+    {
+      $filterArray = array(0 => $filterArray);
+    }
+
+    // if we don't have filter array, load all files
+    if (!empty($filterArray))
+    {
+      foreach ($filterArray as $filter)
+      {
+        $svgFiles = array_merge($svgFiles, $this->getAllSvgs($filter));
+      }
+    } else {
+      $svgFiles = $this->getAllSvgs();
+    }
     $this->printSvgBlock($svgFiles);
   }
 
   /**
    * Private Methods
    */
-  private function getAllSvgs($categoryFolder = '')
+  private function getAllSvgs($filter = '')
   {
     $searchDir = $this->svgFolder . DIRECTORY_SEPARATOR;
-    if (!empty($categoryFolder))
+    $filter = trim($filter, '*');
+    if (!empty($filter))
     {
-      $searchDir .= $categoryFolder . DIRECTORY_SEPARATOR;
+      $searchDir .= $filter;
+      if (is_dir($searchDir))
+      {
+        $searchDir .= DIRECTORY_SEPARATOR;
+      }
     }
     return glob($searchDir  . "*." . trim($this->svgFileExt, '.'));
   }
